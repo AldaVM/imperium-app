@@ -1,0 +1,174 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Permission {
+  id    Int @id @default(autoincrement())
+  rolId Int
+  rol   Rol @relation(fields: [rolId], references: [id])
+
+  serviceId Int
+  service   Service @relation(fields: [serviceId], references: [id])
+
+  @@map("permissions")
+}
+
+model Service {
+  id  Int    @id @default(autoincrement())
+  url String
+
+  description String?
+  Permission  Permission[]
+
+  @@map("services")
+}
+
+model Rol {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name        String
+  description String?
+
+  User       User[]
+  Permission Permission[]
+
+  @@map("roles")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  email String @unique
+  hash  String
+
+  active    Boolean @default(true)
+  firstName String?
+  lastName  String?
+
+  rolId Int
+  rol   Rol @relation(fields: [rolId], references: [id])
+
+  @@map("users")
+}
+
+model Student {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  firstName   String
+  lastName    String
+  fullName    String       @default("")
+  documentId  String       @unique
+  phone       String
+  active      Boolean      @default(true)
+  dateOfBirth DateTime?
+  address     String?
+  email       String?      @unique
+  weight      Int?
+  height      Int?
+  photo       String?
+  sessions    Session[]
+  payments    Payment[]
+  Sede        Sede?        @relation(fields: [sedeId], references: [id])
+  sedeId      Int?
+  attendances Attendance[]
+
+  @@map("students")
+}
+
+model Attendance {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  studentId Int
+  student   Student @relation(fields: [studentId], references: [id])
+
+  @@map("attendances")
+}
+
+model Sede {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  active   Boolean   @default(true)
+  address  String
+  city     String
+  students Student[]
+  Session  Session[]
+
+  @@map("sedes")
+}
+
+model Session {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name               String
+  startTime          DateTime
+  endTime            DateTime
+  maxStudents        Int      @default(0)
+  registeredStudents Int      @default(0)
+  active             Boolean  @default(true)
+
+  sedeId Int
+  sede   Sede @relation(fields: [sedeId], references: [id])
+
+  studentId Int
+  student   Student @relation(fields: [studentId], references: [id])
+
+  @@map("sessions")
+}
+
+model MembershipPlan {
+  id Int @id @default(autoincrement())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name          String
+  sessionsCount Int
+  cost          Float
+  monthPeriod   Int
+  Payment       Payment[]
+  active        Boolean   @default(true)
+
+  @@map("membershipsplan")
+}
+
+model Payment {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  amount        Float
+  paymentMethod String
+
+  expiration        DateTime
+  statusPaid        String
+  isExpiration      Boolean   @default(false)
+  isFreezen         Boolean   @default(false)
+  freezenExpiration DateTime?
+  studentId         Int
+  student           Student   @relation(fields: [studentId], references: [id])
+
+  membershipsplanId Int
+  membershipsplan   MembershipPlan @relation(fields: [membershipsplanId], references: [id])
+
+  @@map("payments")
+}
